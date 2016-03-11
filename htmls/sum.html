@@ -41,20 +41,78 @@
 							</form>
 						</div>
 						<div align="center" id="consultas">
-								<h2>Realiza tus consultas</h2>
-								<br>
-								<div class="row">
-									<div class="col-lg-6">
-										<label>
-											<input type="radio" name="optionsRadios" id="optionsRadios1" value="option1"> Update
-										</label>
-									</div>
-									<div class="col-lg-6">
-										<label>
-											<input type="radio" name="optionsRadios" id="optionsRadios2" value="option2"> Query
-										</label>
-									</div>
+							<h2>Realiza tus consultas</h2>
+							<text id="qRestantes">5</text> consultas restantes
+							<br>
+							<br>
+							<div class="row">
+								<div class="col-lg-6">
+									<label>
+										<input type="radio" name="optionsRadios" id="radio1" value="option1"> Update
+									</label>
 								</div>
+								<div class="col-lg-6">
+									<label>
+										<input type="radio" name="optionsRadios" id="radio2" value="option2"> Query
+									</label>
+								</div>
+							</div>
+							<br>
+							<div class="row">
+								<div id="update" style="display: none;">
+									Coordenas
+									<form id="form_update" role="form">
+										{% csrf_token %}
+										<div class="row">
+											<input required id="coorx" name="x" placeholder="X" maxlength="3" size="3">
+											<input required id="coory" name="y" placeholder="Y" maxlength="3" size="3">
+											<input required id="coorz" name="z" placeholder="Z" maxlength="3" size="3">
+											<input required id="coorv" name="v" placeholder="Valor" maxlength="3" size="3">
+										</div>
+										<br>
+										UPDATE <text id="consulx"></text> <text id="consuly"></text> <text id="consulz"></text> <text id="consulv"></text>
+										<br>
+										<br>
+										<div class="form-group">
+											<button type="submit" class="btn btn-info btn-circle btn-xl" title="Actualizar"><i class="fa fa-check"></i>
+											</button>
+											<button type="button" class="btn btn-danger btn-circle btn-xl" onclick="$('#form_update').trigger('reset');" title="Cancelar"><i class="fa fa-times"></i>
+											</button>
+										</div>
+									</form>
+								</div>
+								<div id="query" style="display: none;">
+									<form id="form_query" role="form">
+										{% csrf_token %}
+										<div class="row">
+											<div class="col-lg-6">
+												Coordenada 1
+												<br>
+												<input required id="coorx1" name="x1" placeholder="X1" maxlength="3" size="3">
+												<input required id="coory1" name="y1" placeholder="Y1" maxlength="3" size="3">
+												<input required id="coorz1" name="z1" placeholder="Z1" maxlength="3" size="3">
+											</div>
+											<div class="col-lg-6">
+												Coordenada 2
+												<br>
+												<input required id="coorx2" name="x2" placeholder="X2" maxlength="3" size="3">
+												<input required id="coory2" name="y2" placeholder="Y2" maxlength="3" size="3">
+												<input required id="coorz2" name="z2" placeholder="Z2" maxlength="3" size="3">
+											</div>
+										</div>
+										<br>
+										QUERY <text id="consulx1"></text> <text id="consuly1"></text> <text id="consulz1"></text> <text id="consulx2"></text> <text id="consuly2"></text> <text id="consulz2"></text>
+										<br>
+										<br>
+										<div class="form-group">
+											<button type="submit" class="btn btn-info btn-circle btn-xl" title="Consultar"><i class="fa fa-check"></i>
+											</button>
+											<button type="button" class="btn btn-danger btn-circle btn-xl" onclick="$('#form_query').trigger('reset');" title="Cancelar"><i class="fa fa-times"></i>
+											</button>
+										</div>
+									</form>
+								</div>
+							</div>
 						</div>
 					</div>
 					<div class="col-lg-6">
@@ -68,20 +126,54 @@
 </div>
 <script type="text/javascript" src="{% static 'js/p5.js' %}"></script>
 <script type="text/javascript">
+var $id = {{ id }};
+</script>
+<script type="text/javascript">
 $("#cubo, #consultas").hide();
 $("#configuracion").submit(function(event){
 	$("#cubo").show();
 	event.preventDefault();
 	$N = $("#configuracion #N").val();
-	$("#configuracion #T").val($("#configuracion #T").val() - 1);
+	$("#qRestantes").text($("#configuracion #M").val());
 	$("#configuracion #T").prop('disabled', true);
+	$("input[id^='coor']").attr({"max":$N,"min":1});
 	if ($("#configuracion #T").val() == 0){
 		$("#configuracion #T").prop('disabled', false);
 		$('#configuracion').trigger('reset');
 	}else{
 		$("#formConfig").hide();
 		$("#consultas").show();
+		$("#configuracion #T").val($("#configuracion #T").val() - 1);
 	}
+});
+$("input[id^='coor']").change(function(){
+	var nombre = $(this).attr("id").split("coor")[1];
+	$("#consul" + nombre).text($(this).val());
+});
+$("input[name='optionsRadios']").click(function(){
+	var nombre = $(this).attr("id");
+	if (nombre == "radio1"){
+		$("#update").show();
+		$("#query").hide();
+	}else{
+		$("#update").hide();
+		$("#query").show();
+	}
+});
+$("form[id^='form_']").submit(function(){
+	event.preventDefault();
+	var nombre = $(this).attr("id").split("_")[1];
+	$.post( "/" + nombre + "/", $(this).serialize(), function( data ) {
+		console.log(data);
+		$(this).trigger('reset');
+		var numero = parseInt($("#qRestantes").text());
+		if (numero != 1){
+			$("#qRestantes").text(numero - 1);
+		}else{
+			$("#formConfig").show();
+			$("#consultas").hide();
+		}
+	}, "json");
 });
 </script>
 <script type="text/javascript">
