@@ -56,6 +56,13 @@ WSGI_APPLICATION = 'Summation.wsgi.application'
 
 TEMPLATE_DIRS = (os.path.join(BASE_DIR,'htmls'),)
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'cubos.db'),
+    }
+}
+
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 

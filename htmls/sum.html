@@ -1,6 +1,27 @@
 {% extends 'base.html' %}
 {% load staticfiles %}
 {% block contenido %}
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title" id="myModalLabel">Machine Learning</h4>
+			</div>
+			<div class="modal-body" align="center">
+				<p id="parrafo"></p>
+				<h2><p id="respuesta"></p></h2>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+			</div>
+		</div>
+	<!-- /.modal-content -->
+	</div>
+<!-- /.modal-dialog -->
+</div>
+
 <div class="col-lg-12">
 	<h1 class="page-header">Cube Summation</h1>
 </div>
@@ -16,6 +37,8 @@
 					<div class="col-lg-6">
 						<div id="formConfig">
 							<form id="configuracion" role="form">
+								{% csrf_token %}
+								<input id="idCubo1" type="hidden" name="id">
 								<div id="casosPrueba" class="form-group">
 									<label>Casos de prueba "T"</label>
 									<input required class="form-control" id="T" name="T" type="number" min="1" max="50" placeholder="¿Cuantos casos de prueba deseas realizar?">
@@ -63,11 +86,12 @@
 									Coordenas
 									<form id="form_update" role="form">
 										{% csrf_token %}
+										<input id="idCubo2" type="hidden" name="id">
 										<div class="row">
-											<input required id="coorx" name="x" placeholder="X" maxlength="3" size="3">
-											<input required id="coory" name="y" placeholder="Y" maxlength="3" size="3">
-											<input required id="coorz" name="z" placeholder="Z" maxlength="3" size="3">
-											<input required id="coorv" name="v" placeholder="Valor" maxlength="3" size="3">
+											<input required type="number" id="coorx" name="x" placeholder="X" maxlength="3" size="3">
+											<input required type="number" id="coory" name="y" placeholder="Y" maxlength="3" size="3">
+											<input required type="number" id="coorz" name="z" placeholder="Z" maxlength="3" size="3">
+											<input required type="number" id="coorv" name="v" placeholder="Valor" maxlength="3" size="3">
 										</div>
 										<br>
 										UPDATE <text id="consulx"></text> <text id="consuly"></text> <text id="consulz"></text> <text id="consulv"></text>
@@ -84,20 +108,21 @@
 								<div id="query" style="display: none;">
 									<form id="form_query" role="form">
 										{% csrf_token %}
+										<input id="idCubo3" type="hidden" name="id">
 										<div class="row">
 											<div class="col-lg-6">
 												Coordenada 1
 												<br>
-												<input required id="coorx1" name="x1" placeholder="X1" maxlength="3" size="3">
-												<input required id="coory1" name="y1" placeholder="Y1" maxlength="3" size="3">
-												<input required id="coorz1" name="z1" placeholder="Z1" maxlength="3" size="3">
+												<input required type="number" id="coorx1" name="x1" placeholder="X1" maxlength="3" size="3">
+												<input required type="number" id="coory1" name="y1" placeholder="Y1" maxlength="3" size="3">
+												<input required type="number" id="coorz1" name="z1" placeholder="Z1" maxlength="3" size="3">
 											</div>
 											<div class="col-lg-6">
 												Coordenada 2
 												<br>
-												<input required id="coorx2" name="x2" placeholder="X2" maxlength="3" size="3">
-												<input required id="coory2" name="y2" placeholder="Y2" maxlength="3" size="3">
-												<input required id="coorz2" name="z2" placeholder="Z2" maxlength="3" size="3">
+												<input required type="number" id="coorx2" name="x2" placeholder="X2" maxlength="3" size="3">
+												<input required type="number" id="coory2" name="y2" placeholder="Y2" maxlength="3" size="3">
+												<input required type="number" id="coorz2" name="z2" placeholder="Z2" maxlength="3" size="3">
 											</div>
 										</div>
 										<br>
@@ -125,9 +150,7 @@
 	</div>
 </div>
 <script type="text/javascript" src="{% static 'js/p5.js' %}"></script>
-<script type="text/javascript">
-var $id = {{ id }};
-</script>
+
 <script type="text/javascript">
 $("#cubo, #consultas").hide();
 $("#configuracion").submit(function(event){
@@ -137,6 +160,7 @@ $("#configuracion").submit(function(event){
 	$("#qRestantes").text($("#configuracion #M").val());
 	$("#configuracion #T").prop('disabled', true);
 	$("input[id^='coor']").attr({"max":$N,"min":1});
+	$("#coorv").attr({"max":"999","min":1});
 	if ($("#configuracion #T").val() == 0){
 		$("#configuracion #T").prop('disabled', false);
 		$('#configuracion').trigger('reset');
@@ -145,6 +169,9 @@ $("#configuracion").submit(function(event){
 		$("#consultas").show();
 		$("#configuracion #T").val($("#configuracion #T").val() - 1);
 	}
+	$.post( "/", $(this).serialize(), function( data ) {
+		$("input[id^='idCubo']").val(data["id"]);
+	}, "json");
 });
 $("input[id^='coor']").change(function(){
 	var nombre = $(this).attr("id").split("coor")[1];
@@ -158,14 +185,22 @@ $("input[name='optionsRadios']").click(function(){
 	}else{
 		$("#update").hide();
 		$("#query").show();
+		$("#configuracion #T").prop('disabled', false);
+		$('#configuracion').trigger('reset');
 	}
 });
+
+function verModal(texto, respuesta){
+	$("#myModal").modal("show");
+	$("#parrafo").text(texto);
+	$("#respuesta").text(respuesta);
+}
+
 $("form[id^='form_']").submit(function(){
 	event.preventDefault();
 	var nombre = $(this).attr("id").split("_")[1];
 	$.post( "/" + nombre + "/", $(this).serialize(), function( data ) {
-		console.log(data);
-		$(this).trigger('reset');
+		verModal(data.con, data.respuesta);
 		var numero = parseInt($("#qRestantes").text());
 		if (numero != 1){
 			$("#qRestantes").text(numero - 1);
@@ -174,6 +209,7 @@ $("form[id^='form_']").submit(function(){
 			$("#consultas").hide();
 		}
 	}, "json");
+	$(this).trigger('reset');
 });
 </script>
 <script type="text/javascript">
@@ -231,18 +267,5 @@ function draw() {
 		translate(0, -400, 0);
 	}
 }
-</script>
-<script id="plantilla_selec" type="text/x-handlebars-template">
-	<div class="form-group">
-		<label>Tamaño de cubo "N"</label>
-		<input required class="form-control" id="N" name="N" type="number" min="1" max="100" placeholder="Define el tamaño del cubo">
-		<p class="help-block">Recuerda que el tamaño del cubo será de NxN y este número debe estar entre 1 y 100.</p>
-		<p class="help-block">La visualización se realizará si N es menor a 8.</p>
-	</div>
-	<div class="form-group">
-		<label>Operaciones "M"</label>
-		<input required class="form-control" id="M" name="M" type="number" min="1" max="1000" placeholder="¿Cuantas operaciones deseas realizar?">
-		<p class="help-block">Podrás realizar un maxino de 1000 operaciones.</p>
-	</div>
 </script>
 {% endblock %}
